@@ -19,6 +19,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/kimauth/FEMSolids.jl",
+    repo="github.com/kimauth/FEMSolids.jl.git",
     devbranch="main",
+    push_preview=true,
 )
