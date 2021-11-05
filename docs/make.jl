@@ -20,4 +20,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/kimauth/FEMSolids.jl",
+    devbranch="main",
 )
