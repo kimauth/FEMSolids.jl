@@ -16,3 +16,6 @@ function LinearElasticity{dim}(;G::Float64, K::Float64) where dim
     E = SymmetricTensor{4, dim}(f)
     return LinearElasticity(G, K, E)
 end
+
+bulk_modulus(;E, ν) = E / 3.0(1.0-2.0ν)
+shear_modulus(;E, ν) = E / 2.0(1.0+ν)
