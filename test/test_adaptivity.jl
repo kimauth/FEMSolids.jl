@@ -10,58 +10,58 @@
 
     cells_to_split = [5]
     grid_1 = refine(grid, cells_to_split)
-    @test grid_1.cells == [  Triangle((1, 2, 3))
-                            Triangle((4, 5, 6))
-                            Triangle((4, 6, 9))
-                            Triangle((6, 8, 9))
-                            Triangle((8, 3, 9))
-                            Triangle((2, 4, 9))
-                            Triangle((3, 2, 9))
-                            Triangle((6, 7, 8))
+    @test grid_1.cells == [  Triangle((1, 2, 3)),
+                            Triangle((4, 5, 6)),
+                            Triangle((4, 6, 9)),
+                            Triangle((6, 8, 9)),
+                            Triangle((8, 3, 9)),
+                            Triangle((2, 4, 9)),
+                            Triangle((3, 2, 9)),
+                            Triangle((6, 7, 8)),
                             Triangle((7, 3, 8))]
     # pvd[1] = vtk_grid("1st_grid", grid_1)
 
     cells_to_split = [8,9]
     grid_2 = refine(grid_1, cells_to_split)
-    @test grid_2.cells == [ Triangle((1, 2, 3))
-                            Triangle((4, 5, 6))
-                            Triangle((4, 6, 9))
-                            Triangle((6, 8, 9))
-                            Triangle((8, 3, 9))
-                            Triangle((2, 4, 9))
-                            Triangle((3, 2, 9))
-                            Triangle((7, 8, 10))
-                            Triangle((8, 6, 10))
-                            Triangle((3, 8, 11))
+    @test grid_2.cells == [ Triangle((1, 2, 3)),
+                            Triangle((4, 5, 6)),
+                            Triangle((4, 6, 9)),
+                            Triangle((6, 8, 9)),
+                            Triangle((8, 3, 9)),
+                            Triangle((2, 4, 9)),
+                            Triangle((3, 2, 9)),
+                            Triangle((7, 8, 10)),
+                            Triangle((8, 6, 10)),
+                            Triangle((3, 8, 11)),
                             Triangle((8, 7, 11))]
     # pvd[2] = vtk_grid("2nd_grid", grid_2)
 
     cells_to_split = [8,9,10,11]
     grid_3 = refine(grid_2, cells_to_split)
-    @test grid_3.cells == [ Triangle((2, 4, 9))
-                            Triangle((2, 9, 17))
-                            Triangle((9, 16, 17))
-                            Triangle((16, 3, 17))
-                            Triangle((6, 10, 13))
-                            Triangle((10, 8, 13))
-                            Triangle((4, 5, 18))
-                            Triangle((5, 6, 18)) 
-                            Triangle((8, 10, 12))
-                            Triangle((10, 7, 12))
-                            Triangle((1, 2, 17)) 
-                            Triangle((3, 1, 17)) 
-                            Triangle((6, 13, 15))
-                            Triangle((13, 8, 15))
-                            Triangle((8, 9, 15)) 
-                            Triangle((7, 11, 12))
-                            Triangle((11, 8, 12))
-                            Triangle((8, 11, 14))
-                            Triangle((11, 3, 14))
-                            Triangle((8, 14, 16))
-                            Triangle((14, 3, 16))
-                            Triangle((9, 8, 16)) 
-                            Triangle((6, 15, 18))
-                            Triangle((15, 9, 18))
+    @test grid_3.cells == [ Triangle((2, 4, 9)),
+                            Triangle((2, 9, 17)),
+                            Triangle((9, 16, 17)),
+                            Triangle((16, 3, 17)),
+                            Triangle((6, 10, 13)),
+                            Triangle((10, 8, 13)),
+                            Triangle((4, 5, 18)),
+                            Triangle((5, 6, 18)),
+                            Triangle((8, 10, 12)),
+                            Triangle((10, 7, 12)),
+                            Triangle((1, 2, 17)), 
+                            Triangle((3, 1, 17)), 
+                            Triangle((6, 13, 15)),
+                            Triangle((13, 8, 15)),
+                            Triangle((8, 9, 15)), 
+                            Triangle((7, 11, 12)),
+                            Triangle((11, 8, 12)),
+                            Triangle((8, 11, 14)),
+                            Triangle((11, 3, 14)),
+                            Triangle((8, 14, 16)),
+                            Triangle((14, 3, 16)),
+                            Triangle((9, 8, 16)), 
+                            Triangle((6, 15, 18)),
+                            Triangle((15, 9, 18)),
                             Triangle((9, 4, 18))]
     # pvd[3] = vtk_grid("3rd_grid", grid_3)
 
