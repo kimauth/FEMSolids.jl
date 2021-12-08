@@ -53,6 +53,11 @@ grid = generate_grid(Triangle, (nel_x, nel_y), lower_left, upper_right; ; build_
 
 This implementation is restricted to linear 2D Triangles.
 
+In order to use this function, you need to use the CA4 branch of Ferrite.jl. You can add it as follows:
+```
+pkg> add Ferrite#CA4
+```
+
 !!! warning
     `nodesets`, `facesets` and `cellsets` are currently lost after refinement and must be reconstructed. They can be added to a grid in the following manner:
     ```julia
