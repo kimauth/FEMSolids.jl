@@ -24,7 +24,7 @@ struct Primal end
 """
     element_routine!(::Primal, ke, fe, cv, xe, material, thickness[, fv, grid, cellid, tₚ, faceset_name])
 
-Compute the element stiffness matrix `ke` and the element load vector `fe`:
+Compute the element stiffness matrix `ke` and the element external load vector `fe`:
 
 ```math
 \\begin{aligned}
