@@ -39,3 +39,30 @@
     fe_reference = tₚ*thickness*norm(xe[2]-xe[1]) / 2
     @test fe[1:4] ≈ vcat(fe_reference, fe_reference)
 end
+
+@testset "Neumann boundary condition" begin
+
+    grid = generate_grid(Quadrilateral, (1,1))
+
+    xe = [getnodes(grid, n).x for n in getcells(grid, 1).nodes]
+
+    ip = Lagrange{2,RefCube,1}()
+    qr = QuadratureRule{2,RefCube}(2)
+    cv = CellVectorValues(qr, ip)
+
+    qr_face = QuadratureRule{1,RefCube}(1)
+    fv = FaceVectorValues(qr_face, ip)
+
+    ke = zeros(8,8)
+    fe = zeros(8)
+
+    material = LinearElasticity{2}(G=1.0, K=1.0)
+    
+    tₚ = Vec(1.0, 2.0)
+
+    element_routine!(Primal(), ke, fe, cv, xe, material, 1.0, fv, grid, 1, tₚ, "top",)
+
+    @test fe == [0., 0., 0., 0., 1., 2., 1., 2.]
+end
+
+   
