@@ -99,7 +99,7 @@ function element_routine!(
         ε = function_symmetric_gradient(cv, qp, ue)
         for j in 1:ndof
             ∇Nⱼᵘ_sym = shape_symmetric_gradient(cv, qp, j)
-            fe[j] += ε ⊡ E ⊡ ∇Nⱼᵘ_sym
+            fe[j] += ε ⊡ E ⊡ ∇Nⱼᵘ_sym * detJ * thickness
             for i in 1:ndof
                 ∇Nᵢᵘ_sym = shape_symmetric_gradient(cv, qp, i)
                 ke[i,j] += ∇Nᵢᵘ_sym ⊡ E ⊡ ∇Nⱼᵘ_sym * detJ * thickness
