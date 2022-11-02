@@ -24,7 +24,11 @@
 
     tₚ = Vec(1.0, 1.0)
 
-    element_routine!(Primal(), ke, fe, cv, xe, material, thickness, fv, grid, 1, tₚ, "Γ")
+    neumann_bc = Neumann((x,t)->tₚ, getfaceset(grid, "Γ"), nfaces(getcells(grid, 1)))
+    update!(neumann_bc)
+    update_cell!(neumann_bc, 1)
+
+    element_routine!(Primal(), ke, fe, fe, cv, xe, material, thickness, fv, neumann_bc)
 
     ke_reference = [
         0.9095 -0.7433 -0.2179 0.4259 -0.6915 0.3174
@@ -59,8 +63,12 @@ end
     material = LinearElasticity{2}(G=1.0, K=1.0)
     
     tₚ = Vec(1.0, 2.0)
+    
+    neumann_bc = Neumann((x,t)->tₚ, getfaceset(grid, "top"), nfaces(getcells(grid, 1)))
+    update!(neumann_bc)
+    update_cell!(neumann_bc, 1)
 
-    element_routine!(Primal(), ke, fe, cv, xe, material, 1.0, fv, grid, 1, tₚ, "top",)
+    element_routine!(Primal(), ke, fe, fe, cv, xe, material, 1.0, fv, neumann_bc)
 
     @test fe == [0., 0., 0., 0., 1., 2., 1., 2.]
 end

@@ -22,22 +22,30 @@ where \$\\boldsymbol{u}\$ is the primary unknown field.
 struct Primal end
 
 """
-    element_routine!(::Primal, ke, fe, cv, xe, material, thickness[, fv, grid, cellid, tₚ, faceset_name])
+    element_routine!(::Primal, ke, fe, fe_external, cv, xe, material, thickness[, fv, neumann_bc::Neumann])
 
-Compute the element stiffness matrix `ke` and the element external load vector `fe`:
+Compute the element stiffness matrix `ke`, the internal force vector `fe` and the external 
+force vector `fe_external`:
 
 ```math
 \\begin{aligned}
 
-\\left( ke \\right)_{ij} &= a\\left( \\boldsymbol{N}^{(\\rm u)}_i, \\, \\boldsymbol{N}^{(\\rm u)}_j \\right)
+\\left( \\texttt{ke} \\right)_{ij} &= a\\left( \\boldsymbol{N}^{(\\rm u)}_i, \\, \\boldsymbol{N}^{(\\rm u)}_j \\right)
 = \\int_\\Omega \\boldsymbol{\\nabla}^\\text{sym} \\boldsymbol{N}^{(\\rm u)}_i : \\boldsymbol{\\mathsf{E}} :
 \\boldsymbol{\\nabla}^\\text{sym} \\boldsymbol{N}^{(\\rm u)}_j \\rm d \\Omega \\\\
 
-\\left( fe \\right)_{i} &= l\\left( \\boldsymbol{N}^{(\\rm u)}_i \\right)
-= \\int_{\\Gamma^{(\\rm u)}_\\text{N} } \\boldsymbol{N}^{(\\rm u)}_i \\cdot \\boldsymbol{t}_\\text{p} \\, \\rm d \\Gamma
+\\left( \\texttt{fe} \\right)_{i} &= a\\left( \\boldsymbol{u}, \\, \\boldsymbol{N}^{(\\rm u)}_j \\right)
+= \\int_\\Omega \\boldsymbol{\\nabla}^\\text{sym} \\boldsymbol{u} : \\boldsymbol{\\mathsf{E}} :
+\\boldsymbol{\\nabla}^\\text{sym} \\boldsymbol{N}^{(\\rm u)}_j \\rm d \\Omega \\\\
+
+\\left( \\texttt{fe\\_external} \\right)_{i} &= l\\left( \\boldsymbol{N}^{(\\rm u)}_i \\right)
+= \\int_{\\Gamma^{(\\rm u)}_\\text{N} } \\boldsymbol{N}^{(\\rm u)}_i \\cdot \\boldsymbol{t}_\\text{p} \\, \\rm d \\Gamma,
 
 \\end{aligned}
 ```
+where \$\\boldsymbol{N}^{(\\rm u)}_i\$ is the shape function for the i-th degree of freedom,
+\$ \\mathsf{E} \$ is the 4-th order elastic stiffness tensor, \$\\boldsymbol{u}\$ is the 
+displacement and \$\\boldsymbol{t}_\\mathrm{p}\$ is the prescribed traction.
 
 # Arguments:
 - `ke`: element stiffness matrix
@@ -49,24 +57,19 @@ Compute the element stiffness matrix `ke` and the element external load vector `
 
 # Optional arguments for integrating the load vector:
 - `fv`: FaceVectorValues
-- `grid`: Grid
-- `cellid`: global cell index of the current cell
-- `tₚ`: traction vector
-- `faceset_name`: name of the faceset over which the load vector should be integrated
+- `neumann_bc`: `Neumann` boundary condition
 """
 function element_routine!( 
     ::Primal,
     ke,
     fe,
+    fe_external,
     cv,
     xe,
     material,
     thickness,
-    fv=nothing,
-    grid = nothing,
-    cellid = nothing,
-    tₚ=nothing,
-    faceset_name=nothing,
+    fv = nothing,
+    neumann_bc = nothing,
 )
     fill!(ke, 0.0)
     fill!(fe, 0.0)
@@ -90,24 +93,26 @@ function element_routine!(
         end
     end
     
-    # assemble l(δu)
-    if faceset_name !== nothing
-        if cellid === nothing || grid === nothing || fv === nothing || tₚ === nothing
-            error("You must give a cellid, grid, facevalues and a traction vector for integrating the load vector.")
-        end
-        for face in 1:nfaces(getcells(grid, cellid))
-            if FaceIndex(cellid, face) ∈ getfaceset(grid, faceset_name)
+    # assemble l(δu) (no body loads)
+    if neumann_bc !== nothing
+        # destructure named fields from struct into variables
+        (; f, faceset, nfaces, time, current_cellid) = neumann_bc
+        for face in 1:nfaces
+            if FaceIndex(current_cellid[], face) ∈ faceset # check face in on Neumann boundary
                 reinit!(fv, xe, face)
                 for qp in 1:getnquadpoints(fv)
+                    x = spatial_coordinate(fv, qp, xe)
+                    tₚ = f(x, time[])
                     detJ = getdetJdV(fv, qp)
                     for i in 1:ndof
                         Nᵢᵘ = shape_value(fv, qp, i)
-                        fe[i] += Nᵢᵘ ⋅ tₚ * detJ * thickness
+                        fe_external[i] += Nᵢᵘ ⋅ tₚ * detJ * thickness
                     end
                 end
             end
         end
     end
 
-    return ke, fe
+    return ke, fe, fe_external
 end
+
