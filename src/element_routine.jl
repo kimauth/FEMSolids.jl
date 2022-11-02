@@ -1,25 +1,36 @@
 
 """
-    Primal
+    Primal(material, thickness::Float64)
 
-This struct is used for dispatching which `element_routine!` is used when you add your own element routines.
-`Primal` refers to the primal format of the moment equilibrium:
+Represent the weak form of the moment equilibrium in primal format:
 ```math
-- \\boldsymbol{\\sigma} \\cdot \\boldsymbol{\\nabla} = \\boldsymbol{0}
+\\int_\\Omega \\boldsymbol{\\sigma} : \\boldsymbol{\\varepsilon}(\\delta \\boldsymbol{u}) \\, \\mathrm{d}\\Omega =
+\\int_\\Omega \\boldsymbol{b} \\cdot \\delta\\boldsymbol{u} \\, \\mathrm{d}\\Omega + \\int_{\\partial\\Omega_\\mathrm{N}} \\boldsymbol{t}_\\mathrm{p} \\cdot \\delta\\boldsymbol{u} \\, \\mathrm{d}\\Gamma,
 ```
+where \$\\boldsymbol{\\sigma}\$ is the stress tensor, \$ \\boldsymbol{\\varepsilon} \$ is 
+the strain tensor, \$ \\boldsymbol{b} \$ is the vector of body forces, \$ \\boldsymbol{t}_\\mathrm{p} \$
+is the prescribed boundary traction and \$ \\delta \\boldsymbol{u} \$ is the test function.
 
-with boundary conditions on the boundary ``\\Gamma = \\Gamma_\\text{D} \\cup \\Gamma_\\text{N}``
+Boundary conditions on the Dirichlet boundary ``\\Gamma_\\text{D}`` and the Neumann
+boundary ``\\Gamma_\\text{N}`` are respectively given as:
 
 ```math
 \\begin{aligned}
 \\boldsymbol{u} &= \\boldsymbol{u}_\\text{p} \\quad \\text{on} \\quad \\Gamma_\\text{D} \\\\
-\\boldsymbol{t} &= \\boldsymbol{t}_\\text{p} \\quad \\text{on} \\quad \\Gamma_\\text{N} \\\\
+\\boldsymbol{\\sigma} \\cdot \\boldsymbol{n} &= \\boldsymbol{t}_\\text{p} \\quad \\text{on} \\quad \\Gamma_\\text{N} \\\\
 \\end{aligned}
 ```
+where \$\\boldsymbol{u}\$ is the displacement field.
 
-where \$\\boldsymbol{u}\$ is the primary unknown field.
+# Arguments:
+- `materal`: Material model for the stress-strain relation
+- `thickness`: Cross-sectional area / out-of-plane thickness for 1D / 2D problems 
 """
-struct Primal end
+struct Primal{M}
+    material::M
+    thickness::Float64
+end
+
 
 """
     element_routine!(::Primal, ke, fe, fe_external, cv, xe, material, thickness[, fv, neumann_bc::Neumann])
@@ -60,14 +71,12 @@ displacement and \$\\boldsymbol{t}_\\mathrm{p}\$ is the prescribed traction.
 - `neumann_bc`: `Neumann` boundary condition
 """
 function element_routine!( 
-    ::Primal,
+    weak_form::Primal,
     ke,
     fe,
     fe_external,
     cv,
     xe,
-    material,
-    thickness,
     fv = nothing,
     neumann_bc = nothing,
 )
@@ -75,6 +84,7 @@ function element_routine!(
     fill!(fe, 0.0)
 
     # unpack variables
+    (; material, thickness) = weak_form
     E = material.Eᵉ
     
     reinit!(cv, xe)
