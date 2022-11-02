@@ -121,12 +121,12 @@ function refine(grid::Grid{2,Triangle}, cells_to_split)
 end
 
 """
-    linear_to_quadratic(dh_lin::DofHandler{2,Triangle}, dh_quad::DofHandler{2,Triangle}, a_lin)
+    linear_to_quadratic(dh_lin::DofHandler{2,T,G}, dh_quad::DofHandler{2,T,G}, a_lin) where {T, G<:Grid{2,Triangle}}
 
 Interpolate the linear solution `a_lin` (associated with `dh_lin`) to the degrees of freedom of the quadratic `DofHandler` `dh_quad`.
 Return the interpolated values as a vector ordered according to the dofs in `dh_quad`. Restricted to vector valued fields.
 """
-function linear_to_quadratic(dh_lin::DofHandler{2,Triangle}, dh_quad::DofHandler{2,Triangle}, a_lin)
+function linear_to_quadratic(dh_lin::DofHandler{2,T,G}, dh_quad::DofHandler{2,T,G}, a_lin) where {T, G<:Grid{2,Triangle}}
     dim = 2
 
     qr = QuadratureRule{dim,RefTetrahedron,Float64}([NaN for i=1:6], Vec.([(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (0.5, 0.5), (0.0, 0.5), (0.5, 0.0)]))
