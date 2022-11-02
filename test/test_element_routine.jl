@@ -28,8 +28,10 @@
     neumann_bc = Neumann((x,t)->tₚ, getfaceset(grid, "Γ"), nfaces(getcells(grid, 1)))
     update!(neumann_bc)
     update_cell!(neumann_bc, 1)
+    
+    ue = zeros(6)
 
-    element_routine!(weak_form, ke, fe, fe, cv, xe, fv, neumann_bc)
+    element_routine!(weak_form, ke, fe, fe, cv, xe, ue, fv, neumann_bc)
 
     ke_reference = [
         0.9095 -0.7433 -0.2179 0.4259 -0.6915 0.3174
@@ -69,8 +71,10 @@ end
     neumann_bc = Neumann((x,t)->tₚ, getfaceset(grid, "top"), nfaces(getcells(grid, 1)))
     update!(neumann_bc)
     update_cell!(neumann_bc, 1)
+    
+    ue = zeros(8)
 
-    element_routine!(weak_form, ke, fe, fe, cv, xe, fv, neumann_bc)
+    element_routine!(weak_form, ke, fe, fe, cv, xe, ue, fv, neumann_bc)
 
     @test fe == [0., 0., 0., 0., 1., 2., 1., 2.]
 end

@@ -33,7 +33,7 @@ end
 
 
 """
-    element_routine!(::Primal, ke, fe, fe_external, cv, xe, material, thickness[, fv, neumann_bc::Neumann])
+    element_routine!(weak_form::Primal, ke, fe, fe_external, cv, xe, ue [, fv, neumann_bc::Neumann])
 
 Compute the element stiffness matrix `ke`, the internal force vector `fe` and the external 
 force vector `fe_external`:
@@ -59,12 +59,12 @@ where \$\\boldsymbol{N}^{(\\rm u)}_i\$ is the shape function for the i-th degree
 displacement and \$\\boldsymbol{t}_\\mathrm{p}\$ is the prescribed traction.
 
 # Arguments:
+- `weak_form`: weak form representation
 - `ke`: element stiffness matrix
 - `fe`: element force vector
 - `cv`: CellVectorValues
 - `xe`: element coordinate vector
-- `material`: material parameters, for instant only `LinearElasticity` is allowed
-- `thickness`: out-of-plane thickness
+- `ue`: element displacement vector
 
 # Optional arguments for integrating the load vector:
 - `fv`: FaceVectorValues
@@ -77,11 +77,13 @@ function element_routine!(
     fe_external,
     cv,
     xe,
+    ue,
     fv = nothing,
     neumann_bc = nothing,
 )
     fill!(ke, 0.0)
     fill!(fe, 0.0)
+    fill!(fe_external, 0.0)
 
     # unpack variables
     (; material, thickness) = weak_form
@@ -94,15 +96,17 @@ function element_routine!(
     # assemble a(u, δu)
     for qp in 1:getnquadpoints(cv) # both cellvalues have the same number of qp
         detJ = getdetJdV(cv, qp)
+        ε = function_symmetric_gradient(cv, qp, ue)
         for j in 1:ndof
             ∇Nⱼᵘ_sym = shape_symmetric_gradient(cv, qp, j)
+            fe[j] += ε ⊡ E ⊡ ∇Nⱼᵘ_sym
             for i in 1:ndof
                 ∇Nᵢᵘ_sym = shape_symmetric_gradient(cv, qp, i)
                 ke[i,j] += ∇Nᵢᵘ_sym ⊡ E ⊡ ∇Nⱼᵘ_sym * detJ * thickness
             end
         end
     end
-    
+
     # assemble l(δu) (no body loads)
     if neumann_bc !== nothing
         # destructure named fields from struct into variables
