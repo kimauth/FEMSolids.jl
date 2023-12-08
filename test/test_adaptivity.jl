@@ -76,13 +76,13 @@
     grid = generate_grid(Triangle, (1,1))
 
     dh_lin = DofHandler(grid)
-    ip_u = Lagrange{2,RefTetrahedron,1}()
-    push!(dh_lin, :u, 2, ip_u)
+    ip_u = Lagrange{RefTriangle,1}()
+    push!(dh_lin, :u, ip_u^2)
     close!(dh_lin)
 
     dh_quad = DofHandler(grid)
-    ip_u = Lagrange{2,RefTetrahedron,2}()
-    push!(dh_quad, :u, 2, ip_u)
+    ip_u = Lagrange{RefTriangle,2}()
+    push!(dh_quad, :u, ip_u^2)
     close!(dh_quad)
 
     a_lin = [1., 1., 2., 2., 2., 2., 4., 4.]

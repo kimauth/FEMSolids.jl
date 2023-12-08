@@ -28,8 +28,8 @@ function new_node(grid, faceindex)
 end
 
 # add nodes to new_nodes Vector and to split_edges dict
-function add_nodes!(new_nodes, split_edges, grid, face::FaceIndex, nodeid)
-    faces = Ferrite.full_neighborhood(grid, face, true)
+function add_nodes!(new_nodes, split_edges, grid, topology, face::FaceIndex, nodeid)
+    faces = getneighborhood(topology, grid, face, true)
     if !haskey(split_edges, first(faces)) # this face hasn't been assigned a new node yet
         for f in faces[2:end]
             @assert !haskey(split_edges, f) # the neighboring face should not be stored either
@@ -66,7 +66,9 @@ pkg> add Ferrite#CA4
     addfaceset!(mesh, "Γₗ", x -> (x[1] <= h && x[2] ≈ h))
     ```
 """
-function refine(grid::Grid{2,Triangle}, cells_to_split)
+function refine(grid::Grid{2,Triangle}, cells_to_split=1:getncells(grid))
+    # compute topology
+    topology = ExclusiveTopology(grid)
 
     # compute new nodes
     nnodes = getnnodes(grid)
@@ -79,7 +81,7 @@ function refine(grid::Grid{2,Triangle}, cells_to_split)
     while !(old_cell_list == cell_list)
         for cellid in cell_list
             face = longest_edge(grid, cellid)
-            nodeid = add_nodes!(new_nodes, split_edges, grid, face, nodeid)
+            nodeid = add_nodes!(new_nodes, split_edges, grid, topology, face, nodeid)
         end
         old_cell_list = copy(cell_list)
         cell_list = unique!([f[1] for f in keys(split_edges)])
@@ -116,7 +118,7 @@ function refine(grid::Grid{2,Triangle}, cells_to_split)
     cells = vcat(deleteat!(grid.cells, sort!(cell_list)), new_cells)
     nodes = vcat(grid.nodes, new_nodes)
 
-    new_grid = Grid(cells, nodes; topology=Ferrite.ExclusiveTopology(cells)) # currently looses facesets etc.
+    new_grid = Grid(cells, nodes)
     return new_grid
 end
 
@@ -126,12 +128,12 @@ end
 Interpolate the linear solution `a_lin` (associated with `dh_lin`) to the degrees of freedom of the quadratic `DofHandler` `dh_quad`.
 Return the interpolated values as a vector ordered according to the dofs in `dh_quad`. Restricted to vector valued fields.
 """
-function linear_to_quadratic(dh_lin::DofHandler{2,T,G}, dh_quad::DofHandler{2,T,G}, a_lin) where {T, G<:Grid{2,Triangle}}
+function linear_to_quadratic(dh_lin::DofHandler, dh_quad::DofHandler, a_lin)
     dim = 2
 
-    qr = QuadratureRule{dim,RefTetrahedron,Float64}([NaN for i=1:6], Vec.([(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (0.5, 0.5), (0.0, 0.5), (0.5, 0.0)]))
+    qr = QuadratureRule{RefTriangle,Float64}([NaN for i=1:6], Vec.([(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (0.5, 0.5), (0.0, 0.5), (0.5, 0.0)]))
     ip = Lagrange{dim, RefTetrahedron, 1}()
-    cv_nodes = CellVectorValues(qr, ip)
+    cv_nodes = CellValues(qr, ip^2)
 
 
     a_quad = Vector{Float64}(undef, ndofs(dh_quad))
