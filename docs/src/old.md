@@ -3,8 +3,7 @@ CurrentModule = FEMSolids
 ```
 
 # Old code from previous course revisions 
-Equivalent functionality is now documented provided in Ferrite v1.
-Included here for legacy reasons.
+Equivalent functionality is now documented or provided in Ferrite v1.
 
 ```@docs
 LinearElasticity
