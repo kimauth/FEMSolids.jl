@@ -71,22 +71,69 @@
 #     # vtk_save(pvd)
 # end
 
+function calculate_domainsize(grid::Grid)
+    ipg = geometric_interpolation(getcelltype(grid))
+    qr = QuadratureRule{getrefshape(ipg)}(2)
+    cv = CellValues(qr, ipg, ipg)
+    Ω = 0.0
+    for cell in CellIterator(grid)
+        reinit!(cv, cell)
+        for q_point in 1:getnquadpoints(cv)
+            Ω += getdetJdV(cv, q_point)
+        end
+    end
+    return Ω
+end
+
+@testset "simplified refine test" begin
+    grid = generate_grid(Triangle, (10, 10))
+    ipg = geometric_interpolation(getcelltype(grid))
+    qr = QuadratureRule{RefTriangle}(1)
+    cv = CellValues(qr, ipg, ipg)
+    @test calculate_domainsize(grid) ≈ 4 # Test the test routine
+
+    cells_to_split = unique!(rand(1:getncells(grid), 10))
+    refined_grid = refine(grid, cells_to_split)
+    @test calculate_domainsize(refined_grid) ≈ calculate_domainsize(grid)
+end
+
 @testset "linear to quadratic interpolation" begin
 
     grid = generate_grid(Triangle, (1,1))
 
     dh_lin = DofHandler(grid)
     ip_u = Lagrange{RefTriangle,1}()
-    push!(dh_lin, :u, ip_u^2)
+    add!(dh_lin, :u, ip_u^2)
     close!(dh_lin)
 
     dh_quad = DofHandler(grid)
     ip_u = Lagrange{RefTriangle,2}()
-    push!(dh_quad, :u, ip_u^2)
+    add!(dh_quad, :u, ip_u^2)
     close!(dh_quad)
 
     a_lin = [1., 1., 2., 2., 2., 2., 4., 4.]
-    a_quad = linear_to_quadratic(dh_lin, dh_quad, a_lin)
+    a_quad = transfer_solution(dh_lin, dh_quad, a_lin)
 
     @test a_quad == [1., 1., 2., 2., 2., 2., 1.5, 1.5, 2., 2., 1.5, 1.5, 4., 4., 3., 3., 3., 3.]
+end
+
+@testset "transfer solution" begin
+    grid = generate_grid(Quadrilateral, (3, 3))
+    ph = PointEvalHandler(grid, [2 * rand(Vec{2}) - ones(Vec{2}) for _ in 1:10])
+    ip_base = Lagrange{RefQuadrilateral, 1}()
+    ip_to_base = Lagrange{RefQuadrilateral, 2}()
+    for (ip_from, ip_to) in ((ip_base, ip_to_base), (ip_base^2, ip_to_base^2))
+        dh_from = close!(add!(DofHandler(grid), :thefield, ip_from))
+        a_from = zeros(ndofs(dh_from))
+        if isa(ip_to, Lagrange) # Scalar
+            apply_analytical!(a_from, dh_from, :thefield, x -> sinpi(2*x[1]) * exp(x[2]))
+        else
+            apply_analytical!(a_from, dh_from, :thefield, x -> Vec((sinpi(2*x[1]) * exp(x[2]), x[1]*x[2]^2)))
+        end
+        dh_to = close!(add!(DofHandler(grid), :thefield, ip_to))
+        a_to = transfer_solution(dh_from, dh_to, a_from)
+        val_from = evaluate_at_points(ph, dh_from, a_from, :thefield)
+        val_to = evaluate_at_points(ph, dh_to, a_to, :thefield)
+        @test val_from ≈ val_to
+    end
 end
