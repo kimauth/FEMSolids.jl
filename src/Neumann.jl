@@ -1,37 +1,37 @@
 """
-    Neumann(f::Function, faceset::Set{FaceIndex}, nfaces::Int)
+    Neumann(f::Function, facetset::AbstractSet{FacetIndex}, nfacets::Int)
 
 Represent a Neumann boundary condition.
 
 # Arguments:
 - `f`: Prescribed traction as a function `f(x,t)`, with spatial coordinate `x` and time `t`
-- `faceset`: The faces on which the boundary condition acts
-- `nfaces`: Number of faces per cell
+- `facetset`: The facets on which the boundary condition acts
+- `nfacets`: Number of facets per cell
 
 Example:
 ```julia
 grid = generate_grid(Quadrilateral, (5,5))
 
 prescribed_traction(x,t) = Vec(zero(t), x[1]*t)
-faceset = getfaceset(grid, "top")
-nfaces = nfaces(getcells(grid, 1))
+facetset = getfacetset(grid, "top")
+nfacets = nfacets(getcells(grid, 1))
 
-neumann_bc = Neumann(prescribed_traction, faceset, nfaces)
+neumann_bc = Neumann(prescribed_traction, facetset, nfacets)
 ```
 !!! note
     `Neumann` needs to be updated once for each time step with [`update!`](@ref) and
     once for each cell with [`update_cell!`](@ref). 
 """
-struct Neumann{F}
-    f::F
-    faceset::Set{FaceIndex}
-    nfaces::Int
-    time::Ferrite.ScalarWrapper{Float64}
-    current_cellid::Ferrite.ScalarWrapper{Int}
+mutable struct Neumann{F, FS <: AbstractSet{FacetIndex}}
+    const f::F
+    const facetset::FS
+    const nfacets::Int
+    time::Float64
+    current_cellid::Int
 end
 
-function Neumann(f::Function, faceset::Set{FaceIndex}, nfaces)
-    return Neumann(f, faceset, nfaces, Ferrite.ScalarWrapper(0.0), Ferrite.ScalarWrapper(0))
+function Neumann(f::Function, facetset::AbstractSet{FacetIndex}, nfacets)
+    return Neumann(f, facetset, nfacets, 0.0, 0)
 end
 
 """
@@ -40,7 +40,7 @@ end
 Update the Neumann boundary condition `bc` for the current `time`.
 """
 function Ferrite.update!(bc::Neumann, time::Float64 = 0.0)
-    bc.time[] = time
+    bc.time = time
     return bc
 end
 
@@ -50,6 +50,6 @@ end
 Update the Neumann boundary condition `bc` with the current `cellid`.
 """
 function update_cell!(bc::Neumann, cellid::Int)
-    bc.current_cellid[] = cellid
+    bc.current_cellid = cellid
     return bc
 end

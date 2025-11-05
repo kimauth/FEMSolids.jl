@@ -1,4 +1,6 @@
 using FEMSolids
+using Ferrite
+using Tensors
 using Test
 
 @testset "FEMSolids.jl" begin

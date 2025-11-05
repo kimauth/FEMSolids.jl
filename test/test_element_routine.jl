@@ -3,9 +3,9 @@
     dim = 2
     material = LinearElasticity{2}(K=1.25, G=0.4)
 
-    ip = Lagrange{dim, RefTetrahedron, 1}()
-    qr = QuadratureRule{dim, RefTetrahedron}(1)
-    cv = CellVectorValues(qr, ip)
+    ip = Lagrange{RefTriangle, 1}()^2
+    qr = QuadratureRule{RefTriangle}(1)
+    cv = CellValues(qr, ip)
 
     xe = [Vec(6., -4.), Vec(5., 3.), Vec(-4., -1.)]
 
@@ -14,18 +14,18 @@
     ke = Matrix{Float64}(undef, 6, 6)
     fe = Vector{Float64}(undef, 6)
 
-    qr_face = QuadratureRule{dim-1, RefTetrahedron}(1)
-    fv = FaceVectorValues(qr_face, ip)
+    qr_face = FacetQuadratureRule{RefTriangle}(1)
+    fv = FacetValues(qr_face, ip)
 
     nodes = Node.(xe)
     cells = [Triangle((1,2,3))]
     grid = Grid(cells, nodes)
-    addfaceset!(grid, "Γ", Set((FaceIndex(1,1),)))
+    addfacetset!(grid, "Γ", Set((FacetIndex(1,1),)))
 
     weak_form = Primal(material, thickness)
     tₚ = Vec(1.0, 1.0)
 
-    neumann_bc = Neumann((x,t)->tₚ, getfaceset(grid, "Γ"), nfaces(getcells(grid, 1)))
+    neumann_bc = Neumann((x,t)->tₚ, getfacetset(grid, "Γ"), nfacets(getcells(grid, 1)))
     update!(neumann_bc)
     update_cell!(neumann_bc, 1)
     
@@ -53,12 +53,12 @@ end
 
     xe = [getnodes(grid, n).x for n in getcells(grid, 1).nodes]
 
-    ip = Lagrange{2,RefCube,1}()
-    qr = QuadratureRule{2,RefCube}(2)
-    cv = CellVectorValues(qr, ip)
+    ip = Lagrange{RefQuadrilateral,1}()^2
+    qr = QuadratureRule{RefQuadrilateral}(2)
+    cv = CellValues(qr, ip)
 
-    qr_face = QuadratureRule{1,RefCube}(1)
-    fv = FaceVectorValues(qr_face, ip)
+    qr_face = FacetQuadratureRule{RefQuadrilateral}(1)
+    fv = FacetValues(qr_face, ip)
 
     ke = zeros(8,8)
     fe = zeros(8)
@@ -68,7 +68,7 @@ end
 
     tₚ = Vec(1.0, 2.0)
     
-    neumann_bc = Neumann((x,t)->tₚ, getfaceset(grid, "top"), nfaces(getcells(grid, 1)))
+    neumann_bc = Neumann((x,t)->tₚ, getfacetset(grid, "top"), nfacets(getcells(grid, 1)))
     update!(neumann_bc)
     update_cell!(neumann_bc, 1)
     

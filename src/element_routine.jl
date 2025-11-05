@@ -62,7 +62,7 @@ displacement and \$\\boldsymbol{t}_\\mathrm{p}\$ is the prescribed traction.
 - `weak_form`: weak form representation
 - `ke`: element stiffness matrix
 - `fe`: element force vector
-- `cv`: CellVectorValues
+- `cv`: CellValues
 - `xe`: element coordinate vector
 - `ue`: element displacement vector
 
@@ -110,10 +110,10 @@ function element_routine!(
     # assemble l(δu) (no body loads)
     if neumann_bc !== nothing
         # destructure named fields from struct into variables
-        (; f, faceset, nfaces, time, current_cellid) = neumann_bc
-        for face in 1:nfaces
-            if FaceIndex(current_cellid[], face) ∈ faceset # check face in on Neumann boundary
-                reinit!(fv, xe, face)
+        (; f, facetset, nfacets, time, current_cellid) = neumann_bc
+        for facet in 1:nfacets
+            if FacetIndex(current_cellid[], facet) ∈ facetset # check facet in on Neumann boundary
+                reinit!(fv, xe, facet)
                 for qp in 1:getnquadpoints(fv)
                     x = spatial_coordinate(fv, qp, xe)
                     tₚ = f(x, time[])
